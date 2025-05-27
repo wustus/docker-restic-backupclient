@@ -70,7 +70,7 @@ Env vars may contain placeholders like `$(OTHER_ENV_VAR)` which will be resolved
 
 ## Yaml configuration examples
 
-```
+```yaml
 ---
 
 # if set, old backups will be deleted according to the rules below.
@@ -171,3 +171,9 @@ mongodump:
 
 ```
 
+## Notes
+
+The Dockerfile installs Postgres 17. The `pgdump` client is backward compatible but it does not ensure that the dump may be ingested into an older version of Postgres:
+> Loading a dump file into an older server may require manual editing of 
+> the dump file to remove syntax not understood by the older server.
+**Backup and Restore should be tested in critical systems.**

@@ -1,25 +1,24 @@
 #!/bin/bash
 
-export MARIADB_USER=root
-export MARIADB_PASSWORD=guest
-
 # dependencies
-sudo apt-get update
-sudo apt-get install -y mariadb-server restic
+sudo apt update
+sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
+sudo apt update
+sudo apt install -y postgresql-17 restic
 
-# start mariadb
-sudo systemctl start mariadb.service
+# start postgres
+sudo systemctl start postgresql
 
 # set password
-sudo mysql -e "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('guest');"
-sudo mysql -e "FLUSH PRIVILEGES;"
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'guest';"
 
 # ingest data
-mysql -u root -pguest -e "CREATE DATABASE IF NOT EXISTS testdb;"
-mysql -u root -pguest testdb < test/data/artists-mariadb.sql
+sudo -u postgres createdb testdb 
+sudo -u postgres psql -d testdb -f test/data/artists-postgres.sql
 
 # number of expected entries in restored table
-EXPECTED=$(mysql -u root -pguest -e "SELECT COUNT(*) FROM testdb.artist;" -s -N)
+EXPECTED=$(sudo -u postgres psql -d testdb -c "SELECT COUNT(*) FROM artist;" -t -A)
 
 if [ -z "${EXPECTED}" ]; then
     echo "Failed to retrieve expected number."
@@ -34,7 +33,7 @@ export RESTIC_PASSWORD=guest
 export RESTIC_PRUNE_TIMEOUT=12h
 export BACKUP_HOSTNAME=restic_host
 export BACKUP_ROOT=backup
-export BACKUP_CONFIG=test/mariadb_config.yaml
+export BACKUP_CONFIG=test/postgres_config.yaml
 
 # restic dependencies
 pip3 install crontab
@@ -53,14 +52,14 @@ rm -rf restore
 restic restore ${SNAPSHOT} -p "restic_password" --target restore
 
 # extract restore
-gunzip -c restore/backup/mysqldump/MYSQL_testdb_DATA.sql.gz > testdb.sql
+gunzip -c restore/backup/pgdump/PGSQL_testdb.sql.gz > testdb.sql
 
 # re-ingest data
-mysql -u root -pguest -e "DROP TABLE testdb.artist;"
-mysql -u root -pguest testdb < testdb.sql
+sudo -u postgres psql -d testdb -c "DROP TABLE artist;"
+sudo -u postgres psql -d testdb -f testdb.sql
 
 # test consistency
-ACTUAL=$(mysql -u root -pguest -e "SELECT COUNT(*) FROM testdb.artist;" -s -N)
+ACTUAL=$(sudo -u postgres psql -d testdb -c "SELECT COUNT(*) FROM artist;" -t -A)
 
 if [ "${EXPECTED}" != "${ACTUAL}" ]; then
     echo "Initial Rows != Restored Rows: ${EXPECTED} != ${ACTUAL}"

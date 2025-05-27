@@ -1,0 +1,10 @@
+keep:
+  daily: 14
+  last: 8
+  weekly: 8
+pgdump:
+  host: localhost
+  username: postgres
+  password: guest
+  exclude:
+    - template0
