@@ -8,6 +8,7 @@ on:
       - "**"
 
 env:
+  TAG: ${{ github.ref_type == 'branch' && 'latest' || github.ref_name }}
   IMAGE_NAME: ${{ github.repository_owner }}/restic-backupclient
 
 jobs:
@@ -42,6 +43,5 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: wustus/docker-restic-backupclient:${{ env.TAG}}
           push: true
