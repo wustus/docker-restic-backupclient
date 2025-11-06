@@ -8,7 +8,6 @@ on:
       - "**"
 
 env:
-  REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/restic-backupclient
 
 jobs:
@@ -38,13 +37,6 @@ jobs:
         with:
           username: wustus
           password: ${{ secrets.DOCKER_SECRET }}
-
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
