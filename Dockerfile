@@ -1,5 +1,9 @@
 FROM alpine:3.22.2
 
+RUN apk add --no-cache \
+  --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main \
+  postgresql18-client
+
 RUN \
     # install restic \
     apk add --update --no-cache tini restic bash restic-bash-completion curl && \
