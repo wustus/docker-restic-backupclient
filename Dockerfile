@@ -9,11 +9,12 @@ RUN \
     # install elasticdump \
     apk add --update --no-cache npm && \
     # install postgresql client
-    apk add --update --no-cache postgresql17-client
+    apk add --update --no-cache postgresql18-client
 
 WORKDIR /usr/bin/
 ENV BACKUP_ROOT=/backup
 VOLUME /backup
 ADD *.py /scripts/
+USER 1000
 ENTRYPOINT ["/sbin/tini","--"]
 CMD /scripts/backup_client.py schedule @daily
